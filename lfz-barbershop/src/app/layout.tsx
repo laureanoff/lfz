@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, DM_Sans } from "next/font/google";
+import { Big_Shoulders, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const display = Anton({ subsets: ["latin"], weight: "400", variable: "--f-display" });
+const display = Big_Shoulders({ subsets: ["latin"], weight: ["700", "900"], variable: "--f-display" });
 const body = DM_Sans({ subsets: ["latin"], variable: "--f-body" });
 
 const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
