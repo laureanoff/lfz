@@ -43,7 +43,7 @@ export default async function Dashboard() {
               {a.customer_notes && <p className="mt-1 text-sm text-mute">“{a.customer_notes}”</p>}
               <p className="mt-1 text-xs text-mute">Solicitado el {new Date(a.created_at).toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Btn id={a.id} status="confirmed" cls="btn-gold">CONFIRMAR TURNO</Btn>
+                <Btn id={a.id} status="confirmed" cls="btn-primary">CONFIRMAR TURNO</Btn>
                 <Btn id={a.id} status="rejected">RECHAZAR</Btn>
                 <a className="btn btn-line !px-4 !py-2 text-xs" target="_blank" href={waLink(a.customers.phone, `Hola ${a.customers.full_name}, soy de LFZ BarberShop. Te escribo por tu solicitud de turno para el ${when}.`)}>CONTACTAR POR WHATSAPP</a>
               </div>

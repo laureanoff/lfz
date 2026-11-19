@@ -22,7 +22,7 @@ export default function Login() {
         <input className="input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
         <input className="input" type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
         {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
-        <button className="btn btn-gold" disabled={busy}>{busy ? "ENTRANDO…" : "ENTRAR"}</button>
+        <button className="btn btn-primary" disabled={busy}>{busy ? "ENTRANDO…" : "ENTRAR"}</button>
       </form>
     </main>
   );

@@ -14,7 +14,7 @@ export default async function MiTurno({ params }: { params: Promise<{ codigo: st
       <Logo small />
       <h1 className="mt-8 font-display text-4xl font-black uppercase">Tu turno</h1>
       <div className="mt-6">{t ? <TurnoCard t={t} /> : <p className="rounded-xl border border-line bg-coal p-5 text-mute">No encontramos un turno con ese código. Revisá el link.</p>}</div>
-      <Link href="/reservar" className="btn btn-gold mt-8">Reservar otro turno</Link>
+      <Link href="/reservar" className="btn btn-primary mt-8">Reservar otro turno</Link>
     </main>
   );
 }

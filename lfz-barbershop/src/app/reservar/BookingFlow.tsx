@@ -107,7 +107,7 @@ export function BookingFlow({ services, maxDays, initialService }: { services: S
           <textarea className="input" placeholder="Comentario (opcional)" rows={2} maxLength={300} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
-        <button className="btn btn-gold mt-5 w-full" disabled={busy || name.trim().length < 2 || phone.replace(/\D/g, "").length < 8} onClick={submit}>
+        <button className="btn btn-primary mt-5 w-full" disabled={busy || name.trim().length < 2 || phone.replace(/\D/g, "").length < 8} onClick={submit}>
           {busy ? "ENVIANDO…" : "SOLICITAR TURNO"}
         </button>
         <p className="mt-3 text-center text-xs text-mute">Tu turno queda pendiente hasta que lo confirmemos.</p>
