@@ -17,4 +17,4 @@ Next.js 15 + TypeScript + Tailwind 4 + Supabase (Postgres, Auth, Realtime, RLS) 
 - `/admin` protegido por middleware + `is_admin()` + RLS. No hay claves privadas en el código.
 
 ## Pendiente (próximas fases)
-Calendario admin, CRUD de servicios/horarios/bloqueos, clientes, turnos manuales, configuración, modificación de turnos.
+Calendario admin, clientes, turnos manuales y modificación de turnos.

@@ -3,6 +3,7 @@ import { Logo } from "@/components/Logo";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 import { Realtime } from "./Realtime";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const sb = await createClient();
@@ -15,6 +16,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <Realtime />
       <header className="flex items-center justify-between"><Logo href="/admin" small />
         <form action={signOut}><button className="text-sm text-mute hover:text-bone">Salir</button></form></header>
+      <AdminNav />
       {children}
     </div>
   );
