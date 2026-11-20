@@ -107,3 +107,31 @@ body {
 @keyframes slide { to { transform: translateX(-50%); } }
 .shot { flex: none; margin-right: 1rem; padding: 6px; border-radius: 1.4rem; transition: transform .4s cubic-bezier(.2,.7,.2,1); }
 .shot:hover { transform: translateY(-8px) scale(1.04) rotate(-1deg); }
+
+/* ===== Detalles One Piece / Naruto, ticket y estados ===== */
+.pole-gold { height: 7px; background: repeating-linear-gradient(-45deg, #e3b341 0 10px, #f3efe6 10px 20px, #15110c 20px 30px); background-size: 42px 42px; animation: poleMove 3s linear infinite; opacity: .95; }
+@keyframes poleMove { to { background-position: 42px 0; } }
+.aurora-fixed { position: fixed; }
+.ticket { --notch: 66%; -webkit-mask: radial-gradient(circle 13px at 0 var(--notch), transparent 98%, #000) , radial-gradient(circle 13px at 100% var(--notch), transparent 98%, #000); -webkit-mask-composite: source-in; mask: radial-gradient(circle 13px at 0 var(--notch), transparent 98%, #000), radial-gradient(circle 13px at 100% var(--notch), transparent 98%, #000); mask-composite: intersect; }
+.ring-pulse { position: absolute; inset: 0; border-radius: 9999px; border: 2px solid rgba(201,162,77,.65); animation: ringPulse 2.6s ease-out infinite; }
+.ring-pulse.d { animation-delay: 1.3s; }
+@keyframes ringPulse { 0% { transform: scale(.55); opacity: .9; } 100% { transform: scale(1.55); opacity: 0; } }
+.draw { stroke-dasharray: 64; stroke-dashoffset: 64; animation: draw .7s .35s cubic-bezier(.65,0,.35,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.pop { animation: pop .65s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.hat-drop { animation: hatDrop 1s .55s cubic-bezier(.34,1.4,.64,1) both, hatBob 3s 1.7s ease-in-out infinite; }
+@keyframes hatDrop { from { transform: translateY(-140px) rotate(-50deg); opacity: 0; } to { transform: rotate(14deg); opacity: 1; } }
+@keyframes hatBob { 0%,100% { transform: rotate(14deg) translateY(0); } 50% { transform: rotate(9deg) translateY(-6px); } }
+.spark { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; border-radius: 2px; background: var(--c); animation: burst 1.2s .45s ease-out both; }
+@keyframes burst { from { transform: translate(-50%,-50%) rotate(0) scale(.4); opacity: 1; } to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(1); opacity: 0; } }
+.shake { animation: shake .6s .5s both; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+.btn-wa { background: linear-gradient(135deg, rgba(37,211,102,.28), rgba(37,211,102,.12)); border: 1px solid rgba(37,211,102,.5); color: #c9ffe0; }
+.btn-wa:hover { background: linear-gradient(135deg, rgba(37,211,102,.4), rgba(37,211,102,.2)); }
+.tab { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem .9rem; border-radius: 9999px; font-size: .85rem; font-weight: 600; color: rgba(243,240,234,.72); white-space: nowrap; transition: background .2s, color .2s; }
+.tab:hover { background: rgba(255,255,255,.08); color: var(--color-bone); }
+.tab[aria-current="page"] { background: linear-gradient(135deg, #e6c36f, #b78d3a); color: #17120a; box-shadow: 0 8px 22px -10px rgba(201,162,77,.8); }
+.card { background: linear-gradient(155deg, rgba(255,255,255,.085), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.1); border-radius: 1.1rem;
+  -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 24px 40px -28px rgba(0,0,0,.85); }
+.map-dark { filter: invert(92%) hue-rotate(180deg) saturate(.7) brightness(.92) contrast(.95); }

@@ -17,3 +17,12 @@ export const STATUS: Record<string, { label: string; cls: string }> = {
   completed: { label: "Realizado", cls: "bg-sky-500/15 text-sky-300 border-sky-500/30" },
   no_show: { label: "No asistió", cls: "bg-zinc-500/15 text-zinc-300 border-zinc-500/30" },
 };
+
+export const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://lfz-barbershop.vercel.app";
+export const msg = {
+  contact: (n: string, when: string) => `Hola ${n}, soy de LFZ BarberShop. Te escribo por tu solicitud de turno para el ${when}.`,
+  confirm: (n: string, when: string, code: string) => `¡Hola ${n}! Tu turno en LFZ BarberShop quedó confirmado para el ${when}. Podés ver el estado acá: ${SITE}/mi-turno/${code}. ¡Te esperamos!`,
+  reject: (n: string, when: string) => `Hola ${n}, gracias por escribirnos. Lamentablemente no pudimos tomar tu turno del ${when}. Podés elegir otro horario acá: ${SITE}/reservar`,
+  cancel: (n: string, when: string) => `Hola ${n}, te avisamos que tu turno del ${when} en LFZ BarberShop fue cancelado. Si querés reprogramarlo, entrá a ${SITE}/reservar`,
+  reminder: (n: string, when: string) => `Hola ${n}, te recordamos tu turno en LFZ BarberShop el ${when}. ¡Te esperamos!`,
+};

@@ -25,7 +25,7 @@ export default async function Servicios() {
   const { data } = await sb.from("services").select("*").order("display_order");
   return (
     <main className="mt-8">
-      <h1 className="font-display text-4xl font-black uppercase">Servicios</h1>
+      <h1 className="font-display text-4xl font-black uppercase">Precio del corte</h1>
       <p className="mt-2 text-sm text-mute">Los cambios se ven en la web pública al guardar. Para ocultar un servicio, destildá “Visible en la web”.</p>
       <div className="mt-6 grid gap-3">{data?.map((sv) => <ServiceForm key={sv.id} sv={sv} />)}</div>
       <h2 className="mt-10 font-display text-2xl font-black uppercase">Nuevo servicio</h2>

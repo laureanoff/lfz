@@ -16,7 +16,7 @@ export async function signOut() {
 }
 
 // ===== Gestión: servicios, horarios, bloqueos y ajustes (RLS: solo admin) =====
-const refresh = () => ["/", "/reservar", "/admin/servicios", "/admin/horarios", "/admin/ajustes"].forEach((p) => revalidatePath(p));
+const refresh = () => ["/", "/reservar", "/admin/galeria", "/admin/servicios", "/admin/horarios", "/admin/ajustes"].forEach((p) => revalidatePath(p));
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
 export async function saveService(f: FormData) {
@@ -59,4 +59,20 @@ export async function saveSettings(f: FormData) {
     cancellation_policy: str(f, "cancellation_policy"),
   }).eq("id", 1);
   refresh();
+}
+
+export async function refreshSite() { refresh(); }
+
+export async function createManual(f: FormData) {
+  const sb = await createClient();
+  const { data: sv } = await sb.from("services").select("id").eq("is_active", true).order("display_order").limit(1);
+  let res = "ok=1";
+  if (!sv?.[0]) res = "err=service";
+  else {
+    const { error } = await sb.rpc("admin_create_appointment", { p_service_id: sv[0].id, p_date: str(f, "date"), p_start: str(f, "time"),
+      p_name: str(f, "name"), p_phone: str(f, "phone"), p_notes: str(f, "notes") || null });
+    if (error) res = "err=" + (error.message.includes("slot") ? "slot" : error.message.includes("phone") ? "phone" : "error");
+  }
+  revalidatePath("/admin"); revalidatePath("/admin/turnos");
+  redirect(`/admin/turnos?${res}`);
 }

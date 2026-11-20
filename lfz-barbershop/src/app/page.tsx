@@ -1,26 +1,27 @@
 import Image from "next/image";
-import { CalendarCheck, Clock, MapPin, MessageCircle } from "lucide-react";
+import { CalendarCheck, Clock, MapPin, MessageCircle, Navigation } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
+import { LeafDivider } from "@/components/LeafDivider";
 import { Logo } from "@/components/Logo";
+import { Media, type MediaItem } from "@/components/Media";
 import { Reveal } from "@/components/Reveal";
 import { getBookingData } from "@/lib/booking";
+import { createClient } from "@/lib/supabase/server";
 import { hhmm, money } from "@/lib/utils";
 
 export const revalidate = 60;
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-// Fotos en /public/gallery (g1.jpg a g8.jpg). Reemplazalas por originales con el mismo nombre.
-const PHOTOS = Array.from({ length: 8 }, (_, i) => `/gallery/g${i + 1}.jpg`);
+// Si todavía no cargaste fotos desde el panel, se usan estas de /public/gallery.
+const FALLBACK: MediaItem[] = Array.from({ length: 8 }, (_, i) => ({ kind: "image", url: `/gallery/g${i + 1}.jpg`, fit: "cover", focus_x: 50, focus_y: 50, zoom: 1 }));
 const TITLE = "Tu próximo corte, reservado en minutos.".split(" ");
 
-function Row({ photos, reverse = false }: { photos: string[]; reverse?: boolean }) {
+function Row({ items, reverse = false }: { items: MediaItem[]; reverse?: boolean }) {
   return (
     <div className="marquee">
       <div className={`marquee-track ${reverse ? "rev" : ""}`}>
-        {[...photos, ...photos].map((src, i) => (
+        {[...items, ...items].map((m, i) => (
           <div key={i} className="shot glass w-48 md:w-60">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.05rem]">
-              <Image src={src} alt="Corte realizado en LFZ BarberShop" fill sizes="240px" loading="lazy" className="object-cover" />
-            </div>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.05rem] bg-black/40"><Media m={m} /></div>
           </div>
         ))}
       </div>
@@ -30,6 +31,14 @@ function Row({ photos, reverse = false }: { photos: string[]; reverse?: boolean 
 
 export default async function Home() {
   const { service, settings: s, hours, openWeekdays } = await getBookingData();
+  const sb = await createClient();
+  const { data: gal } = await sb.from("gallery_items").select("kind,url,fit,focus_x,focus_y,zoom").eq("is_active", true).order("display_order");
+  let items: MediaItem[] = (gal as MediaItem[] | null)?.length ? (gal as MediaItem[]) : FALLBACK;
+  while (items.length < 8) items = [...items, ...items];
+  const half = Math.ceil(items.length / 2);
+  const rowA = items, rowB = [...items.slice(half), ...items.slice(0, half)].reverse();
+  const addr = String(s?.address ?? "");
+  const mapQ = encodeURIComponent(!addr || /completar/i.test(addr) ? "Justiniano Posse, Córdoba, Argentina" : /posse/i.test(addr) ? addr : `${addr}, Justiniano Posse, Córdoba, Argentina`);
 
   return (
     <main className="pb-24 md:pb-0">
@@ -45,6 +54,7 @@ export default async function Home() {
         <span aria-hidden className="pointer-events-none absolute -left-6 top-24 select-none font-display text-[20rem] font-black leading-none text-transparent [-webkit-text-stroke:1px_rgba(201,162,77,.16)] md:text-[32rem]">LFZ</span>
         <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 pb-28 pt-36 md:grid-cols-[1.15fr_.85fr] md:pt-44">
           <div>
+            <div className="word mb-6" style={{ animationDelay: "100ms" }}><Logo /></div>
             <h1 className="font-display text-6xl font-black uppercase leading-[0.92] md:text-8xl">
               {TITLE.map((w, i) => <span key={i} className="word" style={{ animationDelay: `${300 + i * 110}ms` }}>{w}</span>)}
             </h1>
@@ -64,7 +74,7 @@ export default async function Home() {
             {service && <div className="absolute -right-4 bottom-12"><div className="glass float !rounded-2xl px-5 py-3 [animation-delay:-4s]"><p className="text-[10px] uppercase tracking-widest text-mute">Corte</p><p className="font-display text-3xl font-black text-gold">{money(Number(service.price))}</p></div></div>}
           </div>
         </div>
-        <div className="hairline" />
+        <div className="pole-gold" />
       </section>
 
       <section id="reservar" className="g-book relative overflow-hidden">
@@ -85,8 +95,8 @@ export default async function Home() {
         <div className="relative">
           <Reveal className="mx-auto max-w-6xl px-5"><h2 className="font-display text-4xl font-black uppercase md:text-6xl">Trabajos</h2></Reveal>
           <div className="mt-12 grid gap-5">
-            <Row photos={PHOTOS} />
-            <Row photos={[...PHOTOS].reverse()} reverse />
+            <Row items={rowA} />
+            <Row items={rowB} reverse />
           </div>
         </div>
       </section>
@@ -115,8 +125,23 @@ export default async function Home() {
         </div>
       </section>
 
+      <section id="ubicacion" className="g-info relative overflow-hidden pb-24">
+        <div className="relative mx-auto max-w-6xl px-5">
+          <LeafDivider />
+          <Reveal className="mt-8 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="font-display text-4xl font-black uppercase md:text-5xl">Cómo llegar</h2>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${mapQ}`} target="_blank" rel="noreferrer" className="btn btn-line text-sm"><Navigation size={15} /> ABRIR EN GOOGLE MAPS</a>
+          </Reveal>
+          <Reveal delay={120} className="mt-8">
+            <div className="glass overflow-hidden p-2">
+              <iframe title="Ubicación de LFZ BarberShop" src={`https://www.google.com/maps?q=${mapQ}&z=16&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="map-dark h-[22rem] w-full rounded-[1.4rem] border-0 md:h-[26rem]" />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       <footer className="g-foot">
-        <div className="hairline" />
+        <div className="pole-gold" />
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-10 md:flex-row md:items-center">
           <div><Logo small /><p className="mt-3 text-xs text-mute">© {new Date().getFullYear()} LFZ BarberShop · {s?.address}</p></div>
           <a href="#reservar" className="btn btn-primary">RESERVAR TURNO</a>
