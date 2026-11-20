@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 
+// Supabase Auth necesita un email: el usuario "lfz" se convierte en lfz@lfzbarbershop.app (no se envían mails).
 const DOMAIN = "lfzbarbershop.app";
 const toEmail = (u: string) => (u.includes("@") ? u.trim().toLowerCase() : `${u.trim().toLowerCase()}@${DOMAIN}`);
 
