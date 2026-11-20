@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { pushReady, sendToSubs } from "@/lib/push";
 
 const ALLOWED = ["confirmed", "rejected", "cancelled", "completed", "no_show"];
 export async function setStatus(formData: FormData) {
@@ -75,4 +76,23 @@ export async function createManual(f: FormData) {
   }
   revalidatePath("/admin"); revalidatePath("/admin/turnos");
   redirect(`/admin/turnos?${res}`);
+}
+
+// ===== Notificaciones push del admin =====
+export async function savePushSubscription(sub: { endpoint: string; keys: { p256dh: string; auth: string } }, userAgent?: string) {
+  const sb = await createClient();
+  const { error } = await sb.from("push_subscriptions").upsert({ endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth, user_agent: (userAgent ?? "").slice(0, 200) }, { onConflict: "endpoint" });
+  return { ok: !error, error: error?.message };
+}
+export async function removePushSubscription(endpoint: string) {
+  const sb = await createClient(); await sb.from("push_subscriptions").delete().eq("endpoint", endpoint); return { ok: true };
+}
+export async function sendTestPush() {
+  if (!pushReady()) return { ok: false, error: "Faltan las claves de notificaciones en Vercel." };
+  const sb = await createClient();
+  const { data: subs } = await sb.from("push_subscriptions").select("endpoint,p256dh,auth");
+  if (!subs?.length) return { ok: false, error: "No hay dispositivos activados." };
+  const { sent, gone } = await sendToSubs(subs, { title: "LFZ BarberShop", body: "¡Las notificaciones funcionan! Así vas a ver los turnos nuevos.", url: "/admin", tag: "prueba" });
+  if (gone.length) await sb.from("push_subscriptions").delete().in("endpoint", gone);
+  return { ok: sent > 0, error: sent > 0 ? undefined : "No se pudo enviar. Volvé a activar las notificaciones." };
 }

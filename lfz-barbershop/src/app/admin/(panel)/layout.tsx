@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -5,6 +6,8 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 import { Realtime } from "./Realtime";
+
+export const metadata: Metadata = { title: "LFZ · Panel", manifest: "/admin.webmanifest", appleWebApp: { capable: true, title: "LFZ Admin", statusBarStyle: "black-translucent" }, robots: { index: false, follow: false } };
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const sb = await createClient();

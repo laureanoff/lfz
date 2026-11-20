@@ -1,4 +1,5 @@
 import { AptCard, type Apt } from "@/components/admin/AptCard";
+import { PushCard } from "@/components/admin/PushCard";
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/utils";
 
@@ -24,7 +25,8 @@ export default async function Dashboard() {
 
   return (
     <main className="mt-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <PushCard compact />
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Hoy" value={todayC.count ?? 0} />
         <Stat label="Pendientes" value={P.length} tone={P.length ? "text-amber-300" : ""} />
         <Stat label="Confirmados" value={U.length} />

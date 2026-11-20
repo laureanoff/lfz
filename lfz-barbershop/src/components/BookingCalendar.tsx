@@ -13,7 +13,7 @@ const LABEL = { pending: "Pendiente", confirmed: "Ocupado", blocked: "No disp." 
 const pad = (n: number) => String(n).padStart(2, "0");
 const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
 
-export function BookingCalendar({ service, maxDays, openWeekdays }: { service: Service; maxDays: number; openWeekdays: number[] }) {
+export function BookingCalendar({ service, maxDays, openWeekdays, availability = {} }: { service: Service; maxDays: number; openWeekdays: number[]; availability?: Record<string, number> }) {
   const router = useRouter();
   const sb = useMemo(() => createClient(), []);
   const today = todayISO(); const max = addDays(today, maxDays);
@@ -23,6 +23,9 @@ export function BookingCalendar({ service, maxDays, openWeekdays }: { service: S
   const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
 
+  const nextFree = Object.entries(availability).filter(([k, n]) => n > 0 && k >= today && k <= max).sort(([a], [b]) => a.localeCompare(b)).slice(0, 4);
+  const short = (k: string) => new Date(k + "T12:00:00").toLocaleDateString("es-AR", { weekday: "short", day: "numeric" });
+  function pick(k: string) { const x = new Date(k + "T12:00:00"); setCur({ y: x.getFullYear(), m: x.getMonth() }); setDate(k); }
   const idx = cur.y * 12 + cur.m;
   const first = (new Date(cur.y, cur.m, 1).getDay() + 6) % 7;
   const total = new Date(cur.y, cur.m + 1, 0).getDate();
@@ -45,6 +48,7 @@ export function BookingCalendar({ service, maxDays, openWeekdays }: { service: S
       else setError("No pudimos enviar la solicitud. Probá de nuevo.");
       return;
     }
+    fetch("/api/push/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: data }), keepalive: true }).catch(() => {});
     router.push(`/reserva-exitosa?code=${data}`);
   }
 
@@ -62,7 +66,16 @@ export function BookingCalendar({ service, maxDays, openWeekdays }: { service: S
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
+      {nextFree.length > 0 && (
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-2 text-xs font-semibold text-amber-300"><span className="live-dot" /> Próximos turnos libres</span>
+          {nextFree.map(([k, n]) => (
+            <button key={k} onClick={() => pick(k)} className={`chip ${n <= 3 ? "chip-hot" : ""}`}>{k === today ? "Hoy" : short(k)} · {n <= 3 ? `¡quedan ${n}!` : `${n} libres`}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
         <div className="glass-soft p-4">
           <div className="flex items-center justify-between">
             <button aria-label="Mes anterior" disabled={idx <= t0.getFullYear() * 12 + t0.getMonth()} onClick={() => setCur(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }))} className="nav-btn"><ChevronLeft size={18} /></button>
@@ -74,11 +87,16 @@ export function BookingCalendar({ service, maxDays, openWeekdays }: { service: S
             {Array.from({ length: first }, (_, i) => <span key={`e${i}`} />)}
             {Array.from({ length: total }, (_, i) => {
               const d = i + 1; const iso = `${cur.y}-${pad(cur.m + 1)}-${pad(d)}`;
-              const off = iso < today || iso > max || !openWeekdays.includes(new Date(cur.y, cur.m, d).getDay());
-              return <button key={iso} disabled={off} aria-pressed={date === iso} onClick={() => setDate(iso)} className={`day ${iso === today ? "day-today" : ""}`}>{d}</button>;
+              const free = availability[iso];
+              const off = iso < today || iso > max || !openWeekdays.includes(new Date(cur.y, cur.m, d).getDay()) || free === 0;
+              return (
+                <button key={iso} disabled={off} aria-pressed={date === iso} onClick={() => setDate(iso)} className={`day ${iso === today ? "day-today" : ""}`}>
+                  {d}{free !== undefined && free > 0 && free <= 5 && <span className="day-left">{free}</span>}
+                </button>
+              );
             })}
           </div>
-          <p className="mt-3 text-center text-[11px] text-mute">Los días apagados son de descanso o ya pasaron.</p>
+          <p className="mt-3 text-center text-[11px] text-mute">Los días apagados están completos, son de descanso o ya pasaron. El número chiquito son los turnos que quedan.</p>
         </div>
 
         <div className="glass-soft p-4">

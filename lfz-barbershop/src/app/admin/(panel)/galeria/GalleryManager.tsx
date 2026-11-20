@@ -5,20 +5,22 @@ import { Media } from "@/components/Media";
 import { createClient } from "@/lib/supabase/client";
 import { refreshSite } from "../actions";
 
+export type Hero = { url: string | null; kind: "image" | "video"; fit: "cover" | "contain"; focus_x: number; focus_y: number; zoom: number };
 export type Item = { id: string; kind: "image" | "video"; url: string; storage_path: string; fit: "cover" | "contain"; focus_x: number; focus_y: number; zoom: number; display_order: number; is_active: boolean };
 const MAX_VIDEO = 50 * 1024 * 1024;
 
-async function resize(file: File): Promise<Blob> {
+async function resize(file: File, max = 1600): Promise<Blob> {
   const bmp = await createImageBitmap(file);
-  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
   c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("resize"))), "image/jpeg", 0.86));
 }
 
-export function GalleryManager({ initial }: { initial: Item[] }) {
+export function GalleryManager({ initial, initialHero }: { initial: Item[]; initialHero: Hero }) {
   const sb = useRef(createClient()).current;
   const [items, setItems] = useState<Item[]>(initial);
+  const [hero, setHero] = useState<Hero>(initialHero); const [heroSaved, setHeroSaved] = useState(false);
   const [busy, setBusy] = useState(""); const [note, setNote] = useState(""); const [saved, setSaved] = useState("");
   const set = (id: string, patch: Partial<Item>) => { setSaved(""); setItems((l) => l.map((i) => (i.id === id ? { ...i, ...patch } : i))); };
 
@@ -46,6 +48,31 @@ export function GalleryManager({ initial }: { initial: Item[] }) {
     setBusy(""); await refreshSite();
   }
 
+  const heroMedia = { kind: hero.kind, url: hero.url ?? "/gallery/g2.jpg", fit: hero.fit, focus_x: hero.focus_x, focus_y: hero.focus_y, zoom: hero.zoom };
+  const setH = (patch: Partial<Hero>) => { setHeroSaved(false); setHero((h) => ({ ...h, ...patch })); };
+  async function uploadHero(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return setNote("Elegí una foto o un video.");
+    const video = file.type.startsWith("video/");
+    if (video && file.size > MAX_VIDEO) return setNote("El video pesa más de 50 MB.");
+    setBusy("Subiendo foto principal…"); setNote("");
+    try {
+      const body: Blob = video ? file : await resize(file, 1800);
+      const path = `hero-${crypto.randomUUID()}.${video ? (file.name.split(".").pop() || "mp4").toLowerCase() : "jpg"}`;
+      const up = await sb.storage.from("gallery").upload(path, body, { contentType: video ? file.type : "image/jpeg", cacheControl: "31536000" });
+      if (up.error) throw up.error;
+      setH({ url: sb.storage.from("gallery").getPublicUrl(path).data.publicUrl, kind: video ? "video" : "image", fit: "cover", focus_x: 50, focus_y: 50, zoom: 1 });
+    } catch (e) { setNote(`No se pudo subir: ${(e as Error).message}`); }
+    setBusy("");
+  }
+  async function saveHero() {
+    setBusy("Guardando foto principal…");
+    const { error } = await sb.from("settings").update({ hero_url: hero.url, hero_kind: hero.kind, hero_fit: hero.fit, hero_focus_x: hero.focus_x, hero_focus_y: hero.focus_y, hero_zoom: hero.zoom }).eq("id", 1);
+    setBusy(""); if (error) return setNote(error.message);
+    setHeroSaved(true); await refreshSite();
+  }
+  function useAsHero(i: Item) { setH({ url: i.url, kind: i.kind, fit: "cover", focus_x: i.focus_x, focus_y: i.focus_y, zoom: i.zoom }); window.scrollTo({ top: 0, behavior: "smooth" }); setNote("Ajustala acá arriba y tocá “Guardar foto principal”."); }
+
   async function save(i: Item) {
     setBusy("Guardando…");
     const { error } = await sb.from("gallery_items").update({ fit: i.fit, focus_x: i.focus_x, focus_y: i.focus_y, zoom: i.zoom, is_active: i.is_active }).eq("id", i.id);
@@ -70,7 +97,32 @@ export function GalleryManager({ initial }: { initial: Item[] }) {
 
   return (
     <div className="mt-6">
-      <label className="card flex cursor-pointer flex-col items-center gap-2 border-dashed !border-gold/40 p-8 text-center transition hover:!border-gold">
+      <section className="card grid gap-5 p-4 sm:grid-cols-[210px_1fr]">
+        <div>
+          <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-black/50"><Media m={heroMedia} /></div>
+          <p className="mt-2 text-center text-[11px] text-mute">Así se ve en la portada</p>
+        </div>
+        <div>
+          <h2 className="font-display text-2xl font-black uppercase">Foto principal de la portada</h2>
+          <p className="mt-1 text-xs text-mute">Es la imagen grande que aparece al entrar a la web. Subí una nueva o elegí una de la galería con “Usar como principal”.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <label className="btn btn-line cursor-pointer !py-2 text-xs"><Upload size={14} /> SUBIR OTRA<input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" className="sr-only" onChange={(e) => { uploadHero(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            {hero.url && <button onClick={() => setH({ url: null, kind: "image", fit: "cover", focus_x: 50, focus_y: 50, zoom: 1 })} className="btn btn-line !py-2 text-xs">VOLVER A LA ORIGINAL</button>}
+          </div>
+          <div className="mt-3 grid max-w-sm grid-cols-2 gap-2 text-xs">
+            {(["cover", "contain"] as const).map((f) => (
+              <button key={f} onClick={() => setH({ fit: f })} aria-pressed={hero.fit === f} className={`rounded-lg border py-2 font-semibold ${hero.fit === f ? "border-gold bg-gold/15 text-gold" : "border-white/10 text-mute"}`}>{f === "cover" ? "Llenar recuadro" : "Mostrar completa"}</button>
+            ))}
+          </div>
+          {([["Encuadre horizontal", "focus_x", 0, 100, 1], ["Encuadre vertical", "focus_y", 0, 100, 1], ["Zoom", "zoom", 1, 3, 0.05]] as const).map(([label, key, min, max, step]) => (
+            <label key={key} className="mt-2 grid max-w-sm gap-1 text-[11px] text-mute">{label}
+              <input type="range" min={min} max={max} step={step} value={hero[key]} onChange={(e) => setH({ [key]: Number(e.target.value) } as Partial<Hero>)} className="accent-[#e3b341]" /></label>
+          ))}
+          <button onClick={saveHero} className="btn btn-primary mt-4 !py-2.5 text-xs"><Save size={14} /> {heroSaved ? "GUARDADO" : "GUARDAR FOTO PRINCIPAL"}</button>
+        </div>
+      </section>
+
+      <label className="card mt-6 flex cursor-pointer flex-col items-center gap-2 border-dashed !border-gold/40 p-8 text-center transition hover:!border-gold">
         <Upload className="text-gold" />
         <span className="font-bold">Tocá para subir fotos o videos</span>
         <span className="text-xs text-mute">JPG, PNG, WEBP, MP4, WEBM o MOV · videos de hasta 50 MB · podés elegir varios</span>
@@ -94,6 +146,7 @@ export function GalleryManager({ initial }: { initial: Item[] }) {
               <label key={key} className="mt-2 grid gap-1 text-[11px] text-mute">{label}
                 <input type="range" min={min} max={max} step={step} value={i[key]} onChange={(e) => set(i.id, { [key]: Number(e.target.value) } as Partial<Item>)} className="accent-[#e3b341]" /></label>
             ))}
+            <button onClick={() => useAsHero(i)} className="btn btn-line mt-3 w-full !py-1.5 text-[11px]">USAR COMO PRINCIPAL</button>
             <div className="mt-3 flex items-center justify-between gap-2">
               <div className="flex gap-1">
                 <button aria-label="Mover antes" disabled={idx === 0} onClick={() => move(idx, -1)} className="nav-btn"><ArrowLeft size={15} /></button>

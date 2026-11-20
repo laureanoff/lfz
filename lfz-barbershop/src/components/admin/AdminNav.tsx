@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Clock, Images, LayoutDashboard, Scissors, Settings, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Clock, Images, LayoutDashboard, Scissors, Settings, Users } from "lucide-react";
 
 const LINKS = [
   { href: "/admin", label: "Resumen", Icon: LayoutDashboard },
   { href: "/admin/turnos", label: "Turnos", Icon: CalendarDays },
+  { href: "/admin/estadisticas", label: "Cobros", Icon: BarChart3 },
   { href: "/admin/clientes", label: "Clientes", Icon: Users },
   { href: "/admin/servicios", label: "Precio", Icon: Scissors },
   { href: "/admin/galeria", label: "Galería", Icon: Images },

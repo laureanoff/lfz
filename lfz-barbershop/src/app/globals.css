@@ -77,7 +77,8 @@ body {
 
 .reveal { opacity: 0; transform: translateY(30px) scale(.985); filter: blur(8px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1), filter .9s; }
 .reveal-in { opacity: 1; transform: none; filter: none; }
-.word { display: inline-block; margin-right: .22em; opacity: 0; animation: wordIn .85s cubic-bezier(.2,.7,.2,1) forwards; }
+span.word { display: inline-block; margin-right: .22em; }
+.word { opacity: 0; animation: wordIn .85s cubic-bezier(.2,.7,.2,1) forwards; }
 @keyframes wordIn { from { opacity: 0; transform: translateY(46px) rotate(2deg); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 .fade-up { opacity: 0; animation: fadeUp .5s cubic-bezier(.2,.7,.2,1) forwards; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
@@ -135,3 +136,13 @@ body {
 .card { background: linear-gradient(155deg, rgba(255,255,255,.085), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.1); border-radius: 1.1rem;
   -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 24px 40px -28px rgba(0,0,0,.85); }
 .map-dark { filter: invert(92%) hue-rotate(180deg) saturate(.7) brightness(.92) contrast(.95); }
+
+/* ===== Urgencia ===== */
+.day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; gap: 2px; }
+.day-left { font-size: 9px; font-weight: 700; color: #ffb36b; }
+.day[aria-pressed="true"] .day-left { color: #5a3a08; }
+.live-dot { position: relative; display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #ff4d5e; box-shadow: 0 0 0 0 rgba(255,77,94,.7); animation: livePulse 1.6s infinite; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(255,77,94,.7); } 70% { box-shadow: 0 0 0 9px rgba(255,77,94,0); } 100% { box-shadow: 0 0 0 0 rgba(255,77,94,0); } }
+.chip { display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .9rem; border-radius: 9999px; font-size: .8rem; font-weight: 600; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: background .2s, transform .15s; }
+.chip:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
+.chip-hot { border-color: rgba(255,120,90,.6); background: linear-gradient(135deg, rgba(255,90,70,.2), rgba(255,170,60,.12)); color: #ffd9c2; }

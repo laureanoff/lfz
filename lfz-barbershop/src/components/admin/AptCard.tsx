@@ -36,7 +36,7 @@ export function AptCard({ a }: { a: Apt }) {
         {a.status === "confirmed" && (<>
           <Wa href={waLink(p, msg.confirm(n, when, a.booking_code))}>ENVIAR CONFIRMACIÓN</Wa>
           <Wa href={waLink(p, msg.reminder(n, when))}>RECORDATORIO</Wa>
-          <Btn id={a.id} status="completed">REALIZADO</Btn>
+          <Btn id={a.id} status="completed" cls="btn-line !border-emerald-400/50">REALIZADO · COBRADO</Btn>
           <Btn id={a.id} status="no_show">NO VINO</Btn>
           <Btn id={a.id} status="cancelled">CANCELAR</Btn>
         </>)}

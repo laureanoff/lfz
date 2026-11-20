@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { CalendarCheck, Clock, MapPin, MessageCircle, Navigation } from "lucide-react";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { LeafDivider } from "@/components/LeafDivider";
@@ -7,9 +6,9 @@ import { Media, type MediaItem } from "@/components/Media";
 import { Reveal } from "@/components/Reveal";
 import { getBookingData } from "@/lib/booking";
 import { createClient } from "@/lib/supabase/server";
-import { hhmm, money } from "@/lib/utils";
+import { hhmm, money, todayISO } from "@/lib/utils";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 // Si todavía no cargaste fotos desde el panel, se usan estas de /public/gallery.
 const FALLBACK: MediaItem[] = Array.from({ length: 8 }, (_, i) => ({ kind: "image", url: `/gallery/g${i + 1}.jpg`, fit: "cover", focus_x: 50, focus_y: 50, zoom: 1 }));
@@ -30,13 +29,20 @@ function Row({ items, reverse = false }: { items: MediaItem[]; reverse?: boolean
 }
 
 export default async function Home() {
-  const { service, settings: s, hours, openWeekdays } = await getBookingData();
+  const { service, settings: s, hours, openWeekdays, availability } = await getBookingData();
   const sb = await createClient();
   const { data: gal } = await sb.from("gallery_items").select("kind,url,fit,focus_x,focus_y,zoom").eq("is_active", true).order("display_order");
   let items: MediaItem[] = (gal as MediaItem[] | null)?.length ? (gal as MediaItem[]) : FALLBACK;
   while (items.length < 8) items = [...items, ...items];
   const half = Math.ceil(items.length / 2);
   const rowA = items, rowB = [...items.slice(half), ...items.slice(0, half)].reverse();
+  const heroM: MediaItem = s?.hero_url
+    ? { kind: s.hero_kind ?? "image", url: s.hero_url, fit: s.hero_fit ?? "cover", focus_x: s.hero_focus_x ?? 50, focus_y: s.hero_focus_y ?? 50, zoom: Number(s.hero_zoom ?? 1) }
+    : { kind: "image", url: "/gallery/g2.jpg", fit: "cover", focus_x: 50, focus_y: 50, zoom: 1 };
+  const today = todayISO();
+  const freeToday = availability[today] ?? 0;
+  const nextDay = Object.entries(availability).filter(([k, n]) => k > today && n > 0).sort(([a], [b]) => a.localeCompare(b))[0];
+  const hasData = Object.keys(availability).length > 0;
   const addr = String(s?.address ?? "");
   const mapQ = encodeURIComponent(!addr || /completar/i.test(addr) ? "Justiniano Posse, Córdoba, Argentina" : /posse/i.test(addr) ? addr : `${addr}, Justiniano Posse, Córdoba, Argentina`);
 
@@ -63,12 +69,16 @@ export default async function Home() {
               <a href="#reservar" className="btn btn-primary">RESERVAR TURNO</a>
               <a href="#trabajos" className="btn btn-line">VER TRABAJOS</a>
             </div>
+            {hasData && (freeToday > 0 || nextDay) && (
+              <a href="#reservar" className={`word mt-6 flex w-fit items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-semibold ${freeToday > 0 && freeToday <= 3 ? "chip-hot" : "chip"}`} style={{ animationDelay: "1.6s" }}>
+                <span className="live-dot" />
+                {freeToday > 0 ? (freeToday <= 3 ? `¡Hoy quedan solo ${freeToday} turno${freeToday === 1 ? "" : "s"}!` : `Hoy quedan ${freeToday} turnos libres`) : `Hoy ya no quedan turnos · próximo libre: ${new Date(nextDay![0] + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "numeric" })}`}
+              </a>
+            )}
           </div>
           <div className="relative hidden md:block">
             <div className="float glass p-2.5">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-[1.3rem]">
-                <Image src="/gallery/g2.jpg" alt="Degradé realizado en LFZ BarberShop" fill priority sizes="40vw" className="object-cover" />
-              </div>
+              <div className="relative aspect-[3/4] overflow-hidden rounded-[1.3rem] bg-black/40"><Media m={heroM} eager /></div>
             </div>
             <div className="absolute -left-10 top-14"><div className="glass float flex items-center gap-2 !rounded-2xl px-4 py-3 text-sm [animation-delay:-2s]"><CalendarCheck size={16} className="text-gold" /> Turno online en 1 minuto</div></div>
             {service && <div className="absolute -right-4 bottom-12"><div className="glass float !rounded-2xl px-5 py-3 [animation-delay:-4s]"><p className="text-[10px] uppercase tracking-widest text-mute">Corte</p><p className="font-display text-3xl font-black text-gold">{money(Number(service.price))}</p></div></div>}
@@ -85,7 +95,7 @@ export default async function Home() {
             <p className="mt-3 max-w-lg text-bone/65">Elegí el día, elegí el horario y listo. Te confirmamos por WhatsApp.</p>
           </Reveal>
           <Reveal delay={120} className="mt-10">
-            {service ? <BookingCalendar service={service} maxDays={s?.max_advance_days ?? 30} openWeekdays={openWeekdays} /> : <p className="text-mute">Por el momento no hay turnos disponibles.</p>}
+            {service ? <BookingCalendar service={service} maxDays={s?.max_advance_days ?? 30} openWeekdays={openWeekdays} availability={availability} /> : <p className="text-mute">Por el momento no hay turnos disponibles.</p>}
           </Reveal>
         </div>
       </section>

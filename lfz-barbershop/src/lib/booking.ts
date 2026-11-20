@@ -9,5 +9,12 @@ export async function getBookingData() {
     sb.from("business_hours").select("*").order("open_time"),
   ]);
   const h = hours ?? [];
-  return { service: services?.[0] ?? null, settings, hours: h, openWeekdays: Array.from(new Set(h.map((x) => x.weekday as number))) };
+  const service = services?.[0] ?? null;
+  // Turnos libres por día (si la migración 3 todavía no está aplicada, queda vacío y no se muestra urgencia).
+  const availability: Record<string, number> = {};
+  if (service) {
+    const { data } = await sb.rpc("get_availability_summary", { p_service_id: service.id });
+    (data as { day: string; free: number }[] | null)?.forEach((r) => { availability[r.day] = r.free; });
+  }
+  return { service, availability, settings, hours: h, openWeekdays: Array.from(new Set(h.map((x) => x.weekday as number))) };
 }
