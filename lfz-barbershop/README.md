@@ -3,7 +3,7 @@
 Next.js 15 + TypeScript + Tailwind 4 + Supabase (Postgres, Auth, Realtime, RLS) + Vercel.
 
 ## Puesta en marcha
-1. **Supabase**: proyecto nuevo y exclusivo. SQL Editor → correr `supabase/migrations/0001_init.sql` y después `supabase/migrations/0002_galeria_y_turnos_manuales.sql` y `0003_notificaciones_estadisticas_urgencia.sql` (galería, turnos manuales, precio por turno, horarios corregidos, notificaciones, urgencia).
+1. **Supabase**: proyecto nuevo y exclusivo. SQL Editor → correr `supabase/migrations/0001_init.sql` y después `supabase/migrations/0002_galeria_y_turnos_manuales.sql` `0003_notificaciones_estadisticas_urgencia.sql` y `0004_un_turno_un_horario.sql` (galería, turnos manuales, precio por turno, horarios corregidos, notificaciones, urgencia).
 2. **Auth**: Authentication → Users → *Add user* (tu email y contraseña, marcá *Auto confirm*). Después corré `supabase/seed_admin.sql` con tu email.
 3. **Variables**: copiá `.env.example` a `.env.local` y completá URL y anon key (Project Settings → API).
 4. `npm install && npm run dev` → http://localhost:3000 y http://localhost:3000/admin/login

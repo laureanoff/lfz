@@ -88,11 +88,14 @@ export async function removePushSubscription(endpoint: string) {
   const sb = await createClient(); await sb.from("push_subscriptions").delete().eq("endpoint", endpoint); return { ok: true };
 }
 export async function sendTestPush() {
-  if (!pushReady()) return { ok: false, error: "Faltan las claves de notificaciones en Vercel." };
-  const sb = await createClient();
-  const { data: subs } = await sb.from("push_subscriptions").select("endpoint,p256dh,auth");
-  if (!subs?.length) return { ok: false, error: "No hay dispositivos activados." };
-  const { sent, gone } = await sendToSubs(subs, { title: "LFZ BarberShop", body: "¡Las notificaciones funcionan! Así vas a ver los turnos nuevos.", url: "/admin", tag: "prueba" });
-  if (gone.length) await sb.from("push_subscriptions").delete().in("endpoint", gone);
-  return { ok: sent > 0, error: sent > 0 ? undefined : "No se pudo enviar. Volvé a activar las notificaciones." };
+  try {
+    if (!pushReady()) return { ok: false, error: "Faltan las claves de notificaciones en Vercel." };
+    const sb = await createClient();
+    const { data: subs } = await sb.from("push_subscriptions").select("endpoint,p256dh,auth");
+    if (!subs?.length) return { ok: false, error: "No hay dispositivos activados. Tocá ACTIVAR primero." };
+    const { sent, gone, error } = await sendToSubs(subs, { title: "LFZ BarberShop", body: "¡Las notificaciones funcionan! Así vas a ver los turnos nuevos.", url: "/admin", tag: "prueba" });
+    if (gone.length) await sb.from("push_subscriptions").delete().in("endpoint", gone);
+    if (sent > 0) return { ok: true };
+    return { ok: false, error: error || "No se pudo enviar. Tocá DESACTIVAR y volvé a ACTIVAR en este dispositivo." };
+  } catch (e) { return { ok: false, error: `Error inesperado: ${(e as Error).message}` }; }
 }

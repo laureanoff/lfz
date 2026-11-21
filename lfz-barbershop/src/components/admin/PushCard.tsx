@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, Loader2, Send } from "lucide-react";
 import { removePushSubscription, savePushSubscription, sendTestPush } from "@/app/admin/(panel)/actions";
 
-const KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const KEY = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim().replace(/^["']+|["']+$/g, "").replace(/^[A-Za-z_]+=/, "").replace(/=+$/, "");
 const toBytes = (b64: string) => { const p = "=".repeat((4 - (b64.length % 4)) % 4); const r = atob((b64 + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
 
 export function PushCard({ compact = false }: { compact?: boolean }) {
@@ -39,7 +39,12 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
     if (sub) { await removePushSubscription(sub.endpoint); await sub.unsubscribe(); }
     setState("off"); setBusy(false); setMsg("");
   }
-  async function test() { setBusy(true); const r = await sendTestPush(); setMsg(r.ok ? "Te mandamos una notificación de prueba." : r.error || "Error"); setBusy(false); }
+  async function test() {
+    setBusy(true); setMsg("Enviando…");
+    try { const r = await sendTestPush(); setMsg(r.ok ? "Enviada. Si no la ves en unos segundos, revisá que las notificaciones del navegador y del sistema estén permitidas." : r.error || "Error"); }
+    catch { setMsg("No se pudo enviar la prueba. Revisá la conexión e intentá de nuevo."); }
+    setBusy(false);
+  }
 
   if (state === "loading") return null;
   if (compact && state === "on") return null;
